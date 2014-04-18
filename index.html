@@ -19,6 +19,7 @@
   <script type="text/javascript">stLight.options({publisher: "d66e8f87-2284-46d7-a0d8-4cb73c04e838", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
 
   <script type="text/javascript">
+    var CAMIDS = [ "cam01" ];
     $(function(){
       // start live movie
       $(".stream").load(function(){
@@ -34,40 +35,64 @@
           $("#" + $(this).attr("id") + "_error").show();
         }
       })
-      $("#cam01").attr("src", "/stream01");
-      $("#cam02").attr("src", "/stream02");
+      setInterval(function(){
+        try {
+          $("#cam01").attr("src", "/cam01/snapshot.jpg?" + new Date().getTime());
+        } catch(e) { }
+      }, 3000);
 
       function add_node(file, size, id){
         var name = file;
+        var dateid = "";
         var mb = Math.floor(size / 1024 / 1024 * 10) / 10;
-        if(file.match(/(\d{4})(\d{2})(\d{2})\..+/)){
+        if(file.match(/(\d{4})(\d{2})(\d{2})\.([^\.]+)/)){
           name = RegExp.$1 + "年" + RegExp.$2 + "月" + RegExp.$3 + "日";
+          dateid = "date_" + RegExp.$1 + RegExp.$2 + RegExp.$3;
         }
-        name += " (" + mb + "MB)";
+        var medialist = $("#" + dateid);
+        if(medialist.length == 0){
+          medialist = $("<span/>").attr("id", dateid).addClass("medialist");
+          var li = $("<li/>")
+            .append($("<span/>").text(name))
+            .append(medialist)
+            .append($("<div/>").attr("id", dateid + "_content").css("display", "none"));
+	  $("#" + id + "_list").append(li);
+        }
+        var media = file;
         if(file.match(/.*\.gif/)){
-          name += ": gif";
+          media = "GIF";
         } else if(file.match(/.*\.mpg/)){
-          name += ": mpeg1";
+          media = "MPEG";
         } else if(file.match(/.*\.mp4/)){
-          name += ": mpeg4";
+          media = "MPEG4";
         }
-        var a = $("<a/>").attr("href", id + "/" + file).text(name);
-        var div = $("<div/>").css("display", "none");
-        var li = $("<li/>").append(a).append(div);
-	$("#" + id + "_list").append(li);
-        a.click(function(){
-          div.slideToggle();
-          if(div.children().length == 0){
+        var medianode = $("<a/>")
+          .attr("href", id + "/" + file)
+          .append($("<span/>").text(media + " "))
+          .append($("<small/>").text("(" + mb + "MB)"));
+        medialist.append($("<li/>").append(medianode));
+        medianode.click(function(){
+          var content = $("#" + dateid + "_content");
+          if(content.is(":hidden")){
+            content.empty();
             var _img = $("<span/>");
             if(file.match(/\d+\.gif/)){
               _img = $("<img/>").attr("src", id + "/" + file);
             } else if(file.match(/\d+\.mpg/) || file.match(/\d+\.mp4/)){
               var w = 4 * 78 - 30;  // col-md-4
-              var h = Math.floor(280 * w / 360) + 40;
-              _img = $("<object/>").attr("data", id + "/" + file).attr("type", "video/mpeg").attr("width", w).attr("height", h);
+              var h = Math.floor(280 * w / 360);
+              _img = $("<object/>")
+                .attr("data", id + "/" + file).attr("type", "video/mpeg")
+                //.attr("width", w).attr("height", h)
+                .css("width", w + "px").css("height", h + "px");
             }
             var _a = $("<a/>").attr("class", id + "_link").attr("href", id + "/" + file).addClass("thumbnail").append(_img);
-            div.append(_a);
+            content.append(_a);
+            content.slideToggle();
+          } else {
+            content.slideToggle("normal", function(){
+              content.empty();
+            });
           }
           return false;
         });
@@ -84,7 +109,6 @@
         });
       }
       load_list("cam01");
-      load_list("cam02");
     });
   </script>
   <style type="text/css">
@@ -92,6 +116,20 @@
       margin: 0px;
       padding: 0px;
       list-style-type: none;
+    }
+    .medialist {
+      margin: 0px;
+      padding: 0px;
+      list-style-type: none;
+    }
+    .medialist li {
+      display: inline;
+    }
+    .medialist li:before {
+      content: " :: ";
+    }
+    .medialist:first-child {
+      content: "";
     }
   </style>
 </head>
@@ -111,7 +149,7 @@
 
 <div class="container">
 <div class="page-header">
-  <h1>PONTA LIVE
+  <h1>PONTA the HEDGEHOG
     <br/>
     <small>はりねずみのぽんたを全力で見守るサイト</small>
   </h1>
@@ -137,52 +175,32 @@
 </div>
 <div class="row">
   <div class="col-md-5">
-    <h3>DAYTIME</h3>
+    <h3>IR LIVECAM</h3>
     <div>
-      <a href="/stream01" class="thumbnail">
-        <img src="" width="320" height="240" id="cam01" class="stream"/>
-        <img src="spinner.gif" id="cam01_spinner"/>
+      <a href="/stream01">
+        <img src="cam01/snapshot.jpg" width="320" height="240" id="cam01" class="stream"/>
+        <div style="width:320px;height:240px;" id="cam01_spinner"><img src="spinner.gif"/></div>
         <div style="display:none;" id="cam01_error">
-          多分掃除とかしているのでカメラを切っています。リロードしても直らないようでしたら明日くらいにまたお越し下さい。
+          接続できませんでした。
+          リロードしても直らないようでしたらお風呂に入っているかもしれないのでまたあした来てね!
         </div>
       </a>
     </div>
   </div>
   <div class="col-md-5">
-    <h3>NIGHT VISION</h3>
-    <div>
-      <a href="/stream02" class="thumbnail">
-        <img src="" width="320" height="240" id="cam02" class="stream"/>
-        <img src="spinner.gif" id="cam02_spinner"/>
-        <div style="display:none;" id="cam02_error">
-          多分掃除とかしているのでカメラを切っています。リロードしても直らないようでしたら明日くらいにまたお越し下さい。
-        </div>
-      </a>
-    </div>
+    <h3>HISTORY</h3>
+    <ul id="cam01_list" class="cam_list">
+    <li><img src="spinner.gif"/>
+    </ul>
   </div>
-  <div class="col-md-2"></div>
 </div>
 <div class="row">
   <div class="col-md-10">
     <div>
       <small>
-      ※表示されないときはリロードしてください。一部ブラウザ未対応。
-      ライブ映像や画像が大きいのでスマートフォンからは Wi-Fi でのアクセスをお勧めします。
-      夜行性のため夜は暗くしています。
+      ※映像や画像が大きいのでスマートフォンは Wi-Fi 経由でのアクセスをお勧めします。
       </small>
     </div>
-  </div>
-</div>
-<div class="row">
-  <div class="col-md-5">
-    <ul id="cam01_list" class="cam_list">
-    <li><img src="spinner.gif"/>
-    </ul>
-  </div>
-  <div class="col-md-5">
-    <ul id="cam02_list" class="cam_list">
-    <li><img src="spinner.gif"/>
-    </ul>
   </div>
 </div>
 <div class="row">
