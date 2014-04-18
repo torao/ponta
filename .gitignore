@@ -11,6 +11,10 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+cam01/*
+cam02/*
+cam01.txt
+cam02.txt
 
 # Scala-IDE specific
 .scala_dependencies

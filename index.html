@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>はりねずみのぽんた / Ponta the HedgeHog</title>
+  <meta name="keywords" content="hedgehog,live,camera,はりねずみ,ライブ,カメラ,ponta,ぽんた,raspberrypi"/>
+  <meta name="description" content="はりねずみのぽんたの様子を見るためのライブカメラ。"/>
+  <!-- jQuery 1.11.0 -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+  <!-- Bootstrap 3.1.1 -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <!-- ShareThis -->
+  <script type="text/javascript">var switchTo5x=true;</script>
+  <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+  <script type="text/javascript">stLight.options({publisher: "d66e8f87-2284-46d7-a0d8-4cb73c04e838", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+
+  <script type="text/javascript">
+    $(function(){
+      // start live movie
+      $(".stream").load(function(){
+        $("#" + $(this).attr("id") + "_spinner").hide();
+        $("#" + $(this).attr("id") + "_error").hide();
+        $("#" + $(this).attr("id")).data("connected", true);
+      }).error(function(){
+        $("#" + $(this).attr("id") + "_spinner").hide();
+        if($("#" + $(this).attr("id")).data("connected")){
+          $("#" + $(this).attr("id")).attr("src", $("#" + $(this).attr("id")).attr("src"));
+        } else {
+          $(this).hide();
+          $("#" + $(this).attr("id") + "_error").show();
+        }
+      })
+      $("#cam01").attr("src", "/stream01");
+      $("#cam02").attr("src", "/stream02");
+
+      function add_node(file, size, id){
+        var name = file;
+        var mb = Math.floor(size / 1024 / 1024 * 10) / 10;
+        if(file.match(/(\d{4})(\d{2})(\d{2})\..+/)){
+          name = RegExp.$1 + "年" + RegExp.$2 + "月" + RegExp.$3 + "日";
+        }
+        name += " (" + mb + "MB)";
+        if(file.match(/.*\.gif/)){
+          name += ": gif";
+        } else if(file.match(/.*\.mpg/)){
+          name += ": mpeg1";
+        } else if(file.match(/.*\.mp4/)){
+          name += ": mpeg4";
+        }
+        var a = $("<a/>").attr("href", id + "/" + file).text(name);
+        var div = $("<div/>").css("display", "none");
+        var li = $("<li/>").append(a).append(div);
+	$("#" + id + "_list").append(li);
+        a.click(function(){
+          div.slideToggle();
+          if(div.children().length == 0){
+            var _img = $("<span/>");
+            if(file.match(/\d+\.gif/)){
+              _img = $("<img/>").attr("src", id + "/" + file);
+            } else if(file.match(/\d+\.mpg/) || file.match(/\d+\.mp4/)){
+              var w = 4 * 78 - 30;  // col-md-4
+              var h = Math.floor(280 * w / 360) + 40;
+              _img = $("<object/>").attr("data", id + "/" + file).attr("type", "video/mpeg").attr("width", w).attr("height", h);
+            }
+            var _a = $("<a/>").attr("class", id + "_link").attr("href", id + "/" + file).addClass("thumbnail").append(_img);
+            div.append(_a);
+          }
+          return false;
+        });
+      }
+      function load_list(id){
+        $.get("/" + id + ".txt", "", function(data){
+          $("#" + id + "_list").empty();
+	  var motions = data.trim().split(/\n+/).sort().reverse();
+          var i;
+	  for(i=0; i<7 && i<motions.length; i++){
+            var ns = motions[i].split(/\s+/);
+            add_node(ns[0], ns[1], id);
+          }
+        });
+      }
+      load_list("cam01");
+      load_list("cam02");
+    });
+  </script>
+  <style type="text/css">
+    .cam_list {
+      margin: 0px;
+      padding: 0px;
+      list-style-type: none;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse" role="navigation">
+  <div class="container-fluid">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menu">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="/">ぽんた亭</a>
+  </div>
+</nav>
+
+<div class="container">
+<div class="page-header">
+  <h1>PONTA LIVE
+    <br/>
+    <small>はりねずみのぽんたを全力で見守るサイト</small>
+  </h1>
+</div>
+<div class="row">
+  <div class="col-md-2">
+    <div class="thumbnail">
+      <img src="ponta.jpg"/>
+    </div>
+  </div>
+  <div class="col-md-10">
+    <p>
+      <b>ぽんた</b>! 男! <!-- 2014年2月末頃に -->
+      パイドだよ!
+    </p>
+    <p>
+      多分タイあたりで生まれたピグミーヘッジホッグ (ヨツユニハリネズミ)。
+      生まれて一ヶ月も経たないうちにペットのコジマ足立店に来たらしい。
+      で、その環境にまだ慣れていない一週間ほどのビビりまくりなところを店員の油科さんに説明してもらい、ウチに来た。
+      <!-- 2012年3月30日(日) -->
+    </p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-5">
+    <h3>DAYTIME</h3>
+    <div>
+      <a href="/stream01" class="thumbnail">
+        <img src="" width="320" height="240" id="cam01" class="stream"/>
+        <img src="spinner.gif" id="cam01_spinner"/>
+        <div style="display:none;" id="cam01_error">
+          多分掃除とかしているのでカメラを切っています。リロードしても直らないようでしたら明日くらいにまたお越し下さい。
+        </div>
+      </a>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <h3>NIGHT VISION</h3>
+    <div>
+      <a href="/stream02" class="thumbnail">
+        <img src="" width="320" height="240" id="cam02" class="stream"/>
+        <img src="spinner.gif" id="cam02_spinner"/>
+        <div style="display:none;" id="cam02_error">
+          多分掃除とかしているのでカメラを切っています。リロードしても直らないようでしたら明日くらいにまたお越し下さい。
+        </div>
+      </a>
+    </div>
+  </div>
+  <div class="col-md-2"></div>
+</div>
+<div class="row">
+  <div class="col-md-10">
+    <div>
+      <small>
+      ※表示されないときはリロードしてください。一部ブラウザ未対応。
+      ライブ映像や画像が大きいのでスマートフォンからは Wi-Fi でのアクセスをお勧めします。
+      夜行性のため夜は暗くしています。
+      </small>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-5">
+    <ul id="cam01_list" class="cam_list">
+    <li><img src="spinner.gif"/>
+    </ul>
+  </div>
+  <div class="col-md-5">
+    <ul id="cam02_list" class="cam_list">
+    <li><img src="spinner.gif"/>
+    </ul>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <h3>SYSTEM</h3>
+    <p>
+      このサイトは
+      <a href="http://www.raspberrypi.org/">RaspberryPi</a> というワンボードPCに
+      <a href="http://www.logicool.co.jp/ja-jp/product/hd-webcam-c270?crid=34">Web カメラ</a>,
+      <a href="http://www.yodobashi.com/DIGITAL-COWBOY-%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%82%AB%E3%82%A6%E3%83%9C%E3%83%BC%E3%82%A4-DC-NCR13U-USB%E6%8E%A5%E7%B6%9A-%E8%B5%A4%E5%A4%96%E7%B7%9AWEB%E3%82%AB%E3%83%A1%E3%83%A9-130%E4%B8%87%E7%94%BB%E7%B4%A0-CMOS%E3%82%BB%E3%83%B3%E3%82%B5%E3%83%BC%E6%90%AD%E8%BC%89/pd/100000001001131472/">赤外線カメラ</a>
+      を接続し、motion, avconv を使用して自宅サーバより配信しております。
+    </p>
+  </div>
+</div>
+<hr/>
+<footer>
+<div>
+  <span class='st_sharethis_hcount' displayText='ShareThis'></span>
+  <span class='st_facebook_hcount' displayText='Facebook'></span>
+  <span class='st_twitter_hcount' displayText='Tweet'></span>
+  <span class='st_linkedin_hcount' displayText='LinkedIn'></span>
+  <span class='st_pinterest_hcount' displayText='Pinterest'></span>
+  <span class='st_email_hcount' displayText='Email'></span>
+</div>
+<p>Copyright &copy; 2014 facebook:<a href="https://www.facebook.com/kuromoyo">Takami Torao</a>, twitter:<a href="https://twitter.com/kuromoyo">@kuromoyo</a>
+</footer>
+</div>
+</body>
+</html>
