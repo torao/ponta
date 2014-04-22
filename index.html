@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>はりねずみのぽんた / Ponta the HedgeHog</title>
   <meta name="keywords" content="hedgehog,live,camera,はりねずみ,ライブ,カメラ,ponta,ぽんた,raspberrypi"/>
-  <meta name="description" content="はりねずみのぽんたの様子を見るためのライブカメラ。"/>
+  <meta name="description" content="まだらもようのはりねずみ、ぽんたを見守るサイト。"/>
   <!-- jQuery 1.11.0 -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
   <!-- Bootstrap 3.1.1 -->
@@ -19,27 +19,26 @@
   <script type="text/javascript">stLight.options({publisher: "d66e8f87-2284-46d7-a0d8-4cb73c04e838", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
 
   <script type="text/javascript">
-    var CAMIDS = [ "cam01" ];
+    var CAMIDS = [ "cam01", "cam02" ];
     $(function(){
       // start live movie
-      $(".stream").load(function(){
-        $("#" + $(this).attr("id") + "_spinner").hide();
-        $("#" + $(this).attr("id") + "_error").hide();
-        $("#" + $(this).attr("id")).data("connected", true);
-      }).error(function(){
-        $("#" + $(this).attr("id") + "_spinner").hide();
-        if($("#" + $(this).attr("id")).data("connected")){
-          $("#" + $(this).attr("id")).attr("src", $("#" + $(this).attr("id")).attr("src"));
-        } else {
-          $(this).hide();
-          $("#" + $(this).attr("id") + "_error").show();
-        }
-      })
+      function update_image(id, limit){
+        var img = $("<img/>").attr("id", id).attr("src", "/" + id + "/snapshot.jpg?" + new Date().getTime());
+        img.load(function(){
+          $("#" + id).replaceWith(img);
+        }).error(function(){
+          if(limit <= 0){
+            $("#" + id).attr("src", "error.jpg");
+          } else {
+            update_image(id, limit - 1);
+          }
+        });
+      }
       setInterval(function(){
-        try {
-          $("#cam01").attr("src", "/cam01/snapshot.jpg?" + new Date().getTime());
-        } catch(e) { }
-      }, 3000);
+        $.each(CAMIDS, function(i, id){
+          update_image(id, 3);
+        });
+      }, 2000);
 
       function add_node(file, size, id){
         var name = file;
@@ -102,13 +101,15 @@
           $("#" + id + "_list").empty();
 	  var motions = data.trim().split(/\n+/).sort().reverse();
           var i;
-	  for(i=0; i<7 && i<motions.length; i++){
+	  for(i=0; i<14 && i<motions.length; i++){
             var ns = motions[i].split(/\s+/);
             add_node(ns[0], ns[1], id);
           }
         });
       }
-      load_list("cam01");
+      $.each(CAMIDS, function(i, id){
+        load_list(id);
+      });
     });
   </script>
   <style type="text/css">
@@ -135,17 +136,15 @@
 </head>
 <body>
 
-<nav class="navbar navbar-inverse" role="navigation">
-  <div class="container-fluid">
-    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menu">
-      <span class="sr-only">Toggle navigation</span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-    </button>
-    <a class="navbar-brand" href="/">ぽんた亭</a>
-  </div>
-</nav>
+<!-- for Facebook Like button -->
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/ja_JP/all.js#xfbml=1&appId=225937087604443";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
 
 <div class="container">
 <div class="page-header">
@@ -162,40 +161,63 @@
   </div>
   <div class="col-md-10">
     <p>
-      <b>ぽんた</b>! 男だよ! <!-- 2014年2月末頃に -->
-      パイドだよ!
+      <b>ぽんた</b>! おとこ! <!-- 2014年2月末頃に -->
+      まだらもようのはりねずみだよ!
     </p>
     <p>
-      多分タイあたりで生まれたピグミーヘッジホッグ (ヨツユニハリネズミ)。
+      ひげのにいちゃんと暮らしてるんだ!
+      タイってところで生まれたよ!
+      ペットのこじ?アダチ?ってところにいたんだけど、店員のおねえちゃんに抱えられてレバーをむしゃむしゃしてたらいつのまにかここにいたんだ! ふしぎー!
+<!--
+      タイあたりで生まれたピグミーヘッジホッグ (ヨツユニハリネズミ)。
       生まれて一ヶ月も経たないうちにペットのコジマ足立店に来たらしい。
       で、その環境にまだ慣れていない一週間ほどのビビりまくりなところを店員の油科さんに説明してもらい、ウチに来た。
+-->
       <!-- 2012年3月30日(日) -->
     </p>
   </div>
 </div>
 <div class="row">
-  <div class="col-md-5">
-    <h3>IR LIVECAM</h3>
-    <div>
-      <a href="/stream01">
-        <img src="cam01/snapshot.jpg" width="320" height="240" id="cam01" class="stream"/>
-        <div style="width:320px;height:240px;" id="cam01_spinner"><img src="spinner.gif"/></div>
-        <div style="display:none;" id="cam01_error">
-          接続できませんでした。
-          リロードしても直らないようでしたらお風呂に入っているかもしれないのでまたあした来てね!
-        </div>
-      </a>
+  <div class="col-md-9">
+    <div class="row">
+      <div class="col-md-6">
+        <h3>LIVECAM</h3>
+      </div>
     </div>
-  </div>
-  <div class="col-md-4">
-    <h3>HISTORY</h3>
-    <ul id="cam01_list" class="cam_list">
-    <li><img src="spinner.gif"/>
-    </ul>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="thumbnail">
+          <a href="cam01/snapshot.jpg">
+            <img src="cam01/snapshot.jpg" width="364" height="205" id="cam01" alt="Wide Vision"/>
+          </a>
+          <div class="caption">
+            ぼくの家が全部見えるよ! 夜は見えないよ！
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="thumbnail">
+          <a href="cam02/snapshot.jpg">
+            <img src="cam02/snapshot.jpg" width="320" height="240" id="cam02" alt="Night Vision"/>
+          </a>
+          <div class="caption">
+            夜でも見えるよ!
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <ul id="cam02_list" class="cam_list">
+          <li><img src="spinner.gif"/>
+        </ul>
+      </div>
+    </div>
   </div>
   <div class="col-md-3">
 <a class="twitter-timeline" href="https://twitter.com/hedgehog_ponta" data-widget-id="457246211460706304">@hedgehog_ponta からのツイート</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
   </div>
 </div>
 <div class="row">
@@ -209,6 +231,22 @@
 </div>
 <div class="row">
   <div class="col-md-12">
+<!-- Twitter tweet button -->
+<a href="https://twitter.com/share" class="twitter-share-button" data-via="hedgehog_ponta" data-lang="ja">ツイート</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<!-- Facebook Like button -->
+<div class="fb-like" data-href="http://ponta.koiroha.org/" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+<!-- Line -->
+<span>
+<script type="text/javascript" src="//media.line.me/js/line-button.js?v=20140127" ></script>
+<script type="text/javascript">
+new media_line_me.LineButton({"pc":false,"lang":"ja","type":"a"});
+</script>
+</span>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
     <h3>SYSTEM</h3>
     <p>
       このサイトは
@@ -216,19 +254,12 @@
       <a href="http://www.logicool.co.jp/ja-jp/product/hd-webcam-c270?crid=34">Web カメラ</a>,
       <a href="http://www.yodobashi.com/DIGITAL-COWBOY-%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%82%AB%E3%82%A6%E3%83%9C%E3%83%BC%E3%82%A4-DC-NCR13U-USB%E6%8E%A5%E7%B6%9A-%E8%B5%A4%E5%A4%96%E7%B7%9AWEB%E3%82%AB%E3%83%A1%E3%83%A9-130%E4%B8%87%E7%94%BB%E7%B4%A0-CMOS%E3%82%BB%E3%83%B3%E3%82%B5%E3%83%BC%E6%90%AD%E8%BC%89/pd/100000001001131472/">赤外線カメラ</a>
       を接続し、motion, avconv を使用して自宅サーバより配信しております。
+      詳しくは<a href="http://koiroha.blogspot.jp/2014/04/hedgehog-ir-camera-setup.html">こちら</a>。
     </p>
   </div>
 </div>
 <hr/>
 <footer>
-<div>
-  <span class='st_sharethis_hcount' displayText='ShareThis'></span>
-  <span class='st_facebook_hcount' displayText='Facebook'></span>
-  <span class='st_twitter_hcount' displayText='Tweet'></span>
-  <span class='st_linkedin_hcount' displayText='LinkedIn'></span>
-  <span class='st_pinterest_hcount' displayText='Pinterest'></span>
-  <span class='st_email_hcount' displayText='Email'></span>
-</div>
 <p>Copyright &copy; 2014 facebook:<a href="https://www.facebook.com/kuromoyo">Takami Torao</a>, twitter:<a href="https://twitter.com/kuromoyo">@kuromoyo</a>
 </footer>
 </div>
