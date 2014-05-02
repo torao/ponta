@@ -13,10 +13,13 @@
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-  <!-- ShareThis -->
-  <script type="text/javascript">var switchTo5x=true;</script>
-  <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
-  <script type="text/javascript">stLight.options({publisher: "d66e8f87-2284-46d7-a0d8-4cb73c04e838", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+  <!-- jqplot 1.8 -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/jqplot/1.0.8/jquery.jqplot.css"/>
+  <script src="//cdn.jsdelivr.net/jqplot/1.0.8/jquery.jqplot.js"></script>
+  <script src="//cdn.jsdelivr.net/jqplot/1.0.8/plugins/jqplot.meterGaugeRenderer.js"></script>
+  <script src="//cdn.jsdelivr.net/jqplot/1.0.8/plugins/jqplot.dateAxisRenderer.min.js"></script>
+  <script src="//cdn.jsdelivr.net/jqplot/1.0.8/plugins/jqplot.ohlcRenderer.min.js"></script>
+  <script src="//cdn.jsdelivr.net/jqplot/1.0.8/plugins/jqplot.highlighter.min.js"></script>
 
   <script type="text/javascript">
     var CAMIDS = [ "cam01", "cam02" ];
@@ -55,7 +58,7 @@
             .append($("<span/>").text(name))
             .append(medialist)
             .append($("<div/>").attr("id", dateid + "_content").css("display", "none"));
-	  $("#" + id + "_list").append(li);
+    $("#" + id + "_list").append(li);
         }
         var media = file;
         if(file.match(/.*\.gif/)){
@@ -99,9 +102,9 @@
       function load_list(id){
         $.get("/" + id + ".txt", "", function(data){
           $("#" + id + "_list").empty();
-	  var motions = data.trim().split(/\n+/).sort().reverse();
+          var motions = data.trim().split(/\n+/).sort().reverse();
           var i;
-	  for(i=0; i<14 && i<motions.length; i++){
+          for(i=0; i<14 && i<motions.length; i++){
             var ns = motions[i].split(/\s+/);
             add_node(ns[0], ns[1], id);
           }
@@ -109,6 +112,60 @@
       }
       $.each(CAMIDS, function(i, id){
         load_list(id);
+      });
+
+      // 温度センサー情報の更新
+      function load_temperature(){
+        $.get("/temperature.txt", "", function(data, textStatus, jqXHR){
+          data = parseFloat(data.replace(/(^\s+)|(\s+$)/g, ""));
+          var lm = new Date(Date.parse(jqXHR.getResponseHeader("Last-Modified")));
+          var dt = (lm.getYear() + 1900) + "年" + (lm.getMonth() + 1) + "月" + lm.getDate() + "日 " + lm.getHours() + ":" + lm.getMinutes();
+          $.jqplot("tempgauge", [ [ data ] ], {
+            seriesDefaults: {
+              renderer: $.jqplot.MeterGaugeRenderer,
+              rendererOptions: {
+                min: 0,
+                max: 40,
+                label: dt + " " + data.toFixed(1) + "℃",
+                labelPosition: "bottom",
+                labelHeightAdjust: -5,
+                intervals: [ 15, 17, 28, 30, 40 ],
+                intervalColors: [ "#6688cc", "#e7e658", "#66cc66", "#e7e658", "#cc6666" ]
+              }
+            }
+          });
+        });
+      }
+      load_temperature();
+      setInterval(load_temperature, 60 * 1000);
+
+      // 室内温度推移グラフ
+      $.getJSON("/temperature/history.json", "", function(data){
+        $.jqplot("temphist", [ data ], {
+          seriesDefaults: { yaxis: "y2axis" },
+          axes: {
+            xaxis: {
+              renderer: $.jqplot.DateAxisRenderer,
+              tickOptions: { formatString: "%#m/%e" },
+              tickInterval: "1 weeks",
+            },
+            y2axis: {
+              tickOptions: { formatString: "%.1f" }
+            }
+          },
+          series: [ { renderer: $.jqplot.OHLCRenderer } ],
+          highligher: {
+            show: true,
+            showMarker: false,
+            tooltipAxes: "xy",
+            formatString: "<table class='jqplot-highligher'>\
+            <tr><td>date:</td><td>%s</td></tr>\
+            <tr><td>open:</td><td>%s</td></tr>\
+            <tr><td>hi:</td><td>%s</td></tr>\
+            <tr><td>low:</td><td>%s</td></tr>\
+            <tr><td>close:</td><td>%s</td></tr></table>"
+          }
+        });
       });
     });
   </script>
@@ -167,7 +224,7 @@
     <p>
       ひげのにいちゃんと暮らしてるんだ!
       タイってところで生まれたよ!
-      ペットのこじ?アダチ?ってところにいたんだけど、店員のおねえちゃんに抱えられてレバーをむしゃむしゃしてたらいつのまにかここにいたんだ! ふしぎー!
+      ペットのこじ?アダチ?ってところにいたんだけど、店員のおねえちゃんに抱えられておやつをむしゃむしゃしてたらいつのまにかここにいたんだ! ふしぎー!
 <!--
       タイあたりで生まれたピグミーヘッジホッグ (ヨツユニハリネズミ)。
       生まれて一ヶ月も経たないうちにペットのコジマ足立店に来たらしい。
@@ -181,7 +238,7 @@
   <div class="col-md-9">
     <div class="row">
       <div class="col-md-6">
-        <h3>LIVECAM</h3>
+        <h3>PONCAM</h3>
       </div>
     </div>
     <div class="row">
@@ -191,7 +248,7 @@
             <img src="cam01/snapshot.jpg" width="364" height="205" id="cam01" alt="Wide Vision"/>
           </a>
           <div class="caption">
-            ぼくの家が全部見えるよ! 夜は見えないよ！
+            ぼくの部屋だよ! 夜は見えないよ！
           </div>
         </div>
       </div>
@@ -215,9 +272,11 @@
     </div>
   </div>
   <div class="col-md-3">
+<!-- Twitter timeline -->
+<div class="hidden-xs">
 <a class="twitter-timeline" href="https://twitter.com/hedgehog_ponta" data-widget-id="457246211460706304">@hedgehog_ponta からのツイート</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-
+</div>
   </div>
 </div>
 <div class="row">
@@ -231,9 +290,14 @@
 </div>
 <div class="row">
   <div class="col-md-12">
+<div class="visible-xs">
+Twitter もやってるよ! <a href="https://twitter.com/hedgehog_ponta">@hedgehog_ponta</a>
+</div>
 <!-- Twitter tweet button -->
+<div style="width:120px;float:left;">
 <a href="https://twitter.com/share" class="twitter-share-button" data-via="hedgehog_ponta" data-lang="ja">ツイート</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+</div>
 <!-- Facebook Like button -->
 <div class="fb-like" data-href="http://ponta.koiroha.org/" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
 <!-- Line -->
@@ -247,14 +311,73 @@ new media_line_me.LineButton({"pc":false,"lang":"ja","type":"a"});
 </div>
 <div class="row">
   <div class="col-md-12">
-    <h3>SYSTEM</h3>
+    <h3>TEMPERATURE</h3>
+    <div class="row">
+      <div class="col-md-3">
+        <div id="tempgauge" class="plot" style="height:170px;"></div>
+      </div>
+      <div class="col-md-9">
+        <div id="temphist" class="plot", style="height:170px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <h3>Goods</h3>
+  <div class="col-md-12">
+    <p>
+      ぽんたの家のいろいろだよ！
+    </p>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="thumbnail">
+<a href="http://www.amazon.co.jp/gp/product/B00H0AR9TS/ref=as_li_qf_sp_asin_il?ie=UTF8&camp=247&creative=1211&creativeASIN=B00H0AR9TS&linkCode=as2&tag=moyolab-22"><img border="0" src="http://ws-fe.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=B00H0AR9TS&Format=_SL110_&ID=AsinImage&MarketPlace=JP&ServiceVersion=20070822&WS=1&tag=moyolab-22" ></a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B00H0AR9TS" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+          <div class="caption">
+            <p>
+              60x40x22cm: 良い感じなデザインのトルコ製折りたたみ式メッシュコンテナ。
+              床材が漏れるので底と側面をレンジ用アルミシートや壁紙で目張りしています。
+              少し低いので脱走対策は外側をすだれで囲ったりしています。
+              掃除しにくいのが難点。
+            </p>
+            <div class="fav">★★★☆☆</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="thumbnail">
+          <a href="http://www.amazon.co.jp/gp/product/B0048YICHC/ref=as_li_qf_sp_asin_il?ie=UTF8&camp=247&creative=1211&creativeASIN=B0048YICHC&linkCode=as2&tag=moyolab-22"><img border="0" src="http://ws-fe.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=B0048YICHC&Format=_SL110_&ID=AsinImage&MarketPlace=JP&ServiceVersion=20070822&WS=1&tag=moyolab-22" ></a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B0048YICHC" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+          <div class="caption">
+            <p>
+              はりねずみ用品はハムスター用だと小さすぎウサギ用だと大きすぎ、サイズ選びなかなか難しいところです。
+              ハリネズミ用ホイールはこれが一番ちょうど良いサイズでした。
+            </p>
+            <div class="fav">★★★★★</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h4>100均いろいろ</h4>
+        <p>
+          <b>れんが</b> 硬い足場もあった方が落ち着きそうと入れてます。たまに上ですりすりしてます。ホイールの固定用にも。
+          <b>すだれ</b> 半分に切って脱走防止用に生け垣風に周りを囲っています。
+          <b>竹製ランチョンマット</b> 床材の下に敷いたり遮光用の屋根に。
+          <b>小鉢</b> 餌用。
+          <b>造花</b> すだれからアイビーを垂らしたり障害物用に入れています。
+          <b>コルクシート</b> ホイールは少し目が粗く足を取られそうなので敷いています。1.5-3.0mm が丁度良い。
+          <b>ペットシーツ</b> 走りながら粗相をする修正なので汚れ防止用に。
+        </p>
+      </div>
+    </div>
     <p>
       このサイトは
-      <a href="http://www.raspberrypi.org/">RaspberryPi</a> というワンボードPCに
-      <a href="http://www.logicool.co.jp/ja-jp/product/hd-webcam-c270?crid=34">Web カメラ</a>,
-      <a href="http://www.yodobashi.com/DIGITAL-COWBOY-%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%82%AB%E3%82%A6%E3%83%9C%E3%83%BC%E3%82%A4-DC-NCR13U-USB%E6%8E%A5%E7%B6%9A-%E8%B5%A4%E5%A4%96%E7%B7%9AWEB%E3%82%AB%E3%83%A1%E3%83%A9-130%E4%B8%87%E7%94%BB%E7%B4%A0-CMOS%E3%82%BB%E3%83%B3%E3%82%B5%E3%83%BC%E6%90%AD%E8%BC%89/pd/100000001001131472/">赤外線カメラ</a>
+      <a href="http://www.amazon.co.jp/gp/product/B00HI7KZQ2/ref=as_li_qf_sp_asin_tl?ie=UTF8&camp=247&creative=1211&creativeASIN=B00HI7KZQ2&linkCode=as2&tag=moyolab-22">RaspberryPi</a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B00HI7KZQ2" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
+      に
+<a href="http://www.amazon.co.jp/gp/product/B0073PGW6G/ref=as_li_qf_sp_asin_tl?ie=UTF8&camp=247&creative=1211&creativeASIN=B0073PGW6G&linkCode=as2&tag=moyolab-22">魚眼レンズ</a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B0073PGW6G" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />付き
+      <a href="http://www.amazon.co.jp/gp/product/B003YUB660/ref=as_li_qf_sp_asin_tl?ie=UTF8&camp=247&creative=1211&creativeASIN=B003YUB660&linkCode=as2&tag=moyolab-22">Webカメラ</a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B003YUB660" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />、
+      <a href="http://www.amazon.co.jp/gp/product/B00IU5ENB4/ref=as_li_qf_sp_asin_tl?ie=UTF8&camp=247&creative=1211&creativeASIN=B00IU5ENB4&linkCode=as2&tag=moyolab-22">赤外線Webカメラ</a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B00IU5ENB4" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />、
+      <a href="http://www.amazon.co.jp/gp/product/B004FI1570/ref=as_li_qf_sp_asin_tl?ie=UTF8&camp=247&creative=1211&creativeASIN=B004FI1570&linkCode=as2&tag=moyolab-22">温度センサー</a><img src="http://ir-jp.amazon-adsystem.com/e/ir?t=moyolab-22&l=as2&o=9&a=B004FI1570" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;" />
       を接続し、motion, avconv を使用して自宅サーバより配信しております。
-      詳しくは<a href="http://koiroha.blogspot.jp/2014/04/hedgehog-ir-camera-setup.html">こちら</a>。
+      詳しくは<a href="http://koiroha.blogspot.jp/2014/04/hedgehog-ir-camera-setup.html">こちら</a>とか<a href="http://koiroha.blogspot.jp/2014/05/thermometer-server-using-raspberrypi.html">こちら</a>とか。
     </p>
   </div>
 </div>
